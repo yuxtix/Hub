@@ -140,6 +140,100 @@ local Button = Tab:Button({
     end
 })
 
+local Button = Tab:Button({
+    Title = "Porximity Prompt 0",
+    Desc = "Todos los proximity prompts duraran 0 Segundos",
+    Locked = false,
+    Callback = function()
+	-- LocalScript
+	
+while true do
+	wait(3)
+    local cantidadModificados = 0
+
+    for _, objeto in ipairs(workspace:GetDescendants()) do
+        if objeto:IsA("ProximityPrompt") then
+            objeto.HoldDuration = 0
+            cantidadModificados += 1
+        end
+    end
+  
+    print("Se modificaron " .. cantidadModificados .. " ProximityPrompts (HoldDuration = 0)")
+end
+
+modificarPrompts()
+
+    end
+})
+
+local Section = Tab:Section({ 
+    Title = "Teleport",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Posicion = 0
+local x = 0
+local y = 0
+local z = 0
+
+local Button = Tab:Button({
+    Title = "Guardar Posicion",
+    Locked = false,
+    Callback = function()
+		local char = game.Players.LocalPlayer.Character
+		local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
+		pos = pos and pos.Position
+		if not pos then
+		end
+		local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
+		x = math.round(pos.X)
+		y = math.round(pos.Y)
+		z = math.round(pos.Z)
+
+		Posicion = roundedPos
+		print(Posicion)
+		WindUI:Notify({
+            Title = "Guardado",
+            Content = roundedPos,
+            Icon = "rbxassetid://10876599977",
+            Duration = 5,
+        })
+		
+
+    end
+})
+
+
+
+--teletransportar
+local Button = Tab:Button({
+    Title = "Teletransportar",
+    Locked = false,
+    Callback = function()
+		
+	
+	local char = game.Players.LocalPlayer.Character
+	
+		getRoot(char).CFrame = CFrame.new(x,y,z)
+		print(Posicion)
+		WindUI:Notify({
+            Title = "Teletransportado",
+            Content = Posicion,
+            Icon = "rbxassetid://10876599977",
+            Duration = 5,
+        })
+		
+
+    end
+})
+
+
+
+
+
+
+
 local Tab = Window:Tab({
     Title = "Prison Life",
     Icon = "user",
