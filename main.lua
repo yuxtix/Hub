@@ -148,7 +148,6 @@ local Button = Tab:Button({
 	-- LocalScript
 	
 while true do
-	wait(3)
     local cantidadModificados = 0
 
     for _, objeto in ipairs(workspace:GetDescendants()) do
@@ -157,8 +156,15 @@ while true do
             cantidadModificados += 1
         end
     end
-  
+	
     print("Se modificaron " .. cantidadModificados .. " ProximityPrompts (HoldDuration = 0)")
+	if cantidadModificados > 200 then
+		wait(8)
+		print("demasiados objetos")
+		else
+			wait(2)
+	end
+
 end
 
 modificarPrompts()
@@ -207,13 +213,16 @@ local Button = Tab:Button({
 
 
 --teletransportar
-local Button = Tab:Button({
+
+
+
+local Keybind = Tab:Keybind({
     Title = "Teletransportar",
-    Locked = false,
-    Callback = function()
-		
-	
-	local char = game.Players.LocalPlayer.Character
+    Desc = "Tecla para teletransportarse",
+    Value = "",
+    Callback = function(v)
+
+		local char = game.Players.LocalPlayer.Character
 	
 		getRoot(char).CFrame = CFrame.new(x,y,z)
 		print(Posicion)
@@ -223,12 +232,9 @@ local Button = Tab:Button({
             Icon = "rbxassetid://10876599977",
             Duration = 5,
         })
-		
 
     end
 })
-
-
 
 
 
