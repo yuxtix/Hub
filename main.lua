@@ -1,37 +1,185 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local Window = Rayfield:CreateWindow({
-   Name = "Rayfield Example Window",
-   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Rayfield Interface Suite",
-   LoadingSubtitle = "by Sirius",
-   ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
-   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
-   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
 
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
-      FileName = "Big Hub"
-   },
+WindUI:AddTheme({
+    Name = "VinUI_Purple",
+    Accent = "#db7070", -- Medium purple
+    Outline = "#FFFFFF",
+    Text = "#FFFFFF",
+    Placeholder = "#d99b9b", -- Light purple
+    Background = "#2e1a1a", -- Very dark blue/black
+    Button = "#cd5b5b", -- Slate blue
+    Icon = "#db7070", -- Medium purple
+})
 
-   Discord = {
-      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-   },
+-- Apply the custom theme
+WindUI:SetTheme("VinUI_Purple")
 
-   KeySystem = false, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "Untitled",
-      Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-   }
+local Window = WindUI:CreateWindow({
+    Title = "Yuxtix Hub",
+    Icon = "rbxassetid://137966710397131",
+    Author = "Yuxtix",
+    Folder = "CloudHub",
+    Size = UDim2.fromOffset(580, 460),
+    Transparent = true,
+    Theme = "Amber",
+    SideBarWidth = 200,
+    Background = "", -- rbxassetid only
+    BackgroundImageTransparency = 0.42,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            print("clicked")
+        end,
+    },
+	
+})
+WindUI:SetNotificationLower(true)
+local Tab = Window:Tab({
+    Title = "Inicio",
+    Icon = "hammer",
+    Locked = false,
+	
+})
+
+local Section = Tab:Section({ 
+    Title = "Executor info",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Paragraph = Tab:Paragraph({
+	Color = "Green",
+    Title = "Seguridad del Executor",
+    Desc = "Tu executor es: ".. identifyexecutor().. " 70% seguro",
+})
+
+
+local Section = Tab:Section({ 
+    Title = "Información del Juego",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Nombre",
+    Desc = Game.Name,
+})
+
+
+
+local Tab = Window:Tab({
+    Title = "Universal",
+    Icon = "earth",
+    Locked = false,
+	
+})
+
+
+
+local Paragraph = Tab:Paragraph({
+    Title = "The Best Admin panel",
+    Desc = "", 
+    ImageSize = 30,
+    Thumbnail = "rbxassetid://109542747481756",
+    ThumbnailSize = 80,
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "play",
+            Title = "Ejecutar",
+            Callback = function() 
+			
+			WindUI:Notify({
+            Title = "Ejecutado",
+            Content = "Disfrutalo",
+            Icon = "rbxassetid://10876599977",
+            Duration = 5,
+        })
+			
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+			
+			
+
+			 end,
+        }
+    }
+})
+
+
+local Paragraph = Tab:Paragraph({
+    Title = "Dex studio (Explorer)",
+    Desc = "", 
+    ImageSize = 30,
+    Thumbnail = "rbxassetid://152367563",
+    ThumbnailSize = 100,
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "play",
+            Title = "Ejecutar",
+            Callback = function() 
+			
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+				
+			 end,
+        }
+    }
+})
+
+local Button = Tab:Button({
+    Title = "Http spy",
+    Desc = "Toda peticion http lo obtendras",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Http-Spy-41029"))()
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Prison Life",
+    Icon = "user",
+    Locked = false,
+	
+})
+
+local Button = Tab:Button({
+    Title = "PrizzLife",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/devguy100/PrizzLife/refs/heads/main/pladmin.lua"))()   
+
+    end
+})
+
+local Button = Tab:Button({
+    Title = "Rayans Hub",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/prompt.lua"))()   
+
+    end
+})
+
+local Tab = Window:Tab({
+    Title = "Steal A brainrot Menu",
+    Icon = "user",
+    Locked = false,
+	
+})
+
+
+local Button = Tab:Button({
+    Title = "Tp to base",
+    Locked = false,
+    Callback = function()
+		-- Remote Name: TpToBase
+-- Type: RemoteEvent
+-- Return Type: No return value
+game:GetService("ReplicatedStorage")["TpToBase"]:FireServer()
+    end
 })
