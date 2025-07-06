@@ -186,6 +186,7 @@ local z = 0
 local Button = Tab:Button({
     Title = "Guardar Posicion",
     Locked = false,
+	Icon = "clipboard-copy",
     Callback = function()
 		local char = game.Players.LocalPlayer.Character
 		local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
@@ -219,6 +220,7 @@ local Button = Tab:Button({
 local Keybind = Tab:Keybind({
     Title = "Teletransportar",
     Desc = "Tecla para teletransportarse",
+	Icon = "move-3d",
     Value = "",
     Callback = function(v)
 
