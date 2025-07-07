@@ -285,3 +285,29 @@ local Button = Tab:Button({
 game:GetService("ReplicatedStorage")["TpToBase"]:FireServer()
     end
 })
+
+local Tab = Window:Tab({
+    Title = "Piano Universal",
+    Icon = "music",
+    Locked = false,
+	
+})
+
+local Paragraph = Tab:Paragraph({
+    Title = "Auto Piano",
+    Desc = "", 
+    ImageSize = 22,
+    Thumbnail = "rbxassetid://4904222288",
+    ThumbnailSize = 120,
+    Locked = false,
+    Buttons = {
+        {
+            Icon = "play",
+            Title = "Ejecutar",
+            Callback = function() 
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/TALENTLESS/main/TALENTLESS", true))()
+					
+			 end,
+        }
+    }
+})
