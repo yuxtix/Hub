@@ -38,6 +38,8 @@ local Window = WindUI:CreateWindow({
     },
 	
 })
+
+
 WindUI:SetNotificationLower(true)
 local Tab = Window:Tab({
     Title = "Inicio",
@@ -45,6 +47,8 @@ local Tab = Window:Tab({
     Locked = false,
 	
 })
+Window:SelectTab(1)
+
 
 local Section = Tab:Section({ 
     Title = "Executor info",
