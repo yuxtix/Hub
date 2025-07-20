@@ -47,7 +47,6 @@ local Tab = Window:Tab({
     Locked = false,
 	
 })
-Window:SelectTab(1)
 
 
 local Section = Tab:Section({ 
@@ -339,3 +338,4 @@ local Paragraph = Tab:Paragraph({
         }
     }
 })
+Window:SelectTab(1)
