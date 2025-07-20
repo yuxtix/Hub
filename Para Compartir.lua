@@ -17,7 +17,7 @@ WindUI:AddTheme({
 WindUI:SetTheme("VinUI_Purple")
 
 local Window = WindUI:CreateWindow({
-    Title = "Yuxtix Hub lite",
+    Title = "Yuxtix Hub lite ",
     Icon = "rbxassetid://137966710397131",
     Author = "Yuxtix",
     Folder = "CloudHub",
