@@ -313,7 +313,7 @@ game:GetService("ReplicatedStorage")["TpToBase"]:FireServer()
 local Tab = Window:Tab({
     Title = "Piano Universal",
     Icon = "music",
-    Locked = false,
+    Locked = true,
 	
 })
 
