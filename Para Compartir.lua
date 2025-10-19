@@ -338,4 +338,107 @@ local Paragraph = Tab:Paragraph({
         }
     }
 })
+
+-- ✅ Añadido al final de tu script actual
+
+-- 🌳 Nueva pestaña
+local Tab = Window:Tab({
+    Title = "Jerarquía Visual",
+    Icon = "list-tree",
+    Locked = false,
+})
+
+-- 📋 Sección
+local Section = Tab:Section({ 
+    Title = "Explorador de Modelos",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+-- 🧠 Input: pedir ruta del modelo
+local Ruta = ""
+local InputRuta = Tab:Input({
+    Title = "Ruta del modelo",
+    Desc = "Ejemplo: workspace.Modelo",
+    Value = "",
+    InputIcon = "folder",
+    Type = "Input",
+    Placeholder = "Escribe la ruta aquí...",
+    Callback = function(input)
+        Ruta = input
+        WindUI:Notify({
+            Title = "Ruta guardada",
+            Content = "Modelo: " .. input,
+            Icon = "rbxassetid://10876599977",
+            Duration = 3,
+        })
+    end
+})
+
+-- 🧾 Elemento tipo Code para mostrar la jerarquía
+local CodeViewer = Tab:Code({
+    Title = "Jerarquía del modelo",
+    Code = [[-- Esperando modelo...]],
+})
+
+-- 🌳 Función recursiva para generar el árbol
+local function generarArbol(instancia, nivel)
+    local lineas = {}
+    local prefijo = string.rep(">", nivel)
+    local texto = string.format("%s%s -- %s", prefijo, instancia.Name, instancia.ClassName)
+    table.insert(lineas, texto)
+    for _, hijo in ipairs(instancia:GetChildren()) do
+        local subLineas = generarArbol(hijo, nivel + 1)
+        for _, linea in ipairs(subLineas) do
+            table.insert(lineas, linea)
+        end
+    end
+    return lineas
+end
+
+-- 🖱️ Botón para procesar y mostrar jerarquía
+local Button = Tab:Button({
+    Title = "Mostrar Jerarquía",
+    Desc = "Genera la jerarquía del modelo indicado",
+    Icon = "tree-palm",
+    Locked = false,
+    Callback = function()
+        if Ruta == "" then
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Por favor ingresa primero la ruta del modelo.",
+                Icon = "alert-triangle",
+                Duration = 4,
+            })
+            return
+        end
+
+        local ok, modelo = pcall(function()
+            return loadstring("return " .. Ruta)()
+        end)
+
+        if not ok or modelo == nil then
+            WindUI:Notify({
+                Title = "Ruta inválida",
+                Content = "No se encontró el modelo en: " .. Ruta,
+                Icon = "x-circle",
+                Duration = 5,
+            })
+            CodeViewer:SetCode("-- Error: ruta no válida o modelo no encontrado.")
+            return
+        end
+
+        local salida = generarArbol(modelo, 0)
+        local texto = table.concat(salida, "\n")
+
+        CodeViewer:SetCode(texto)
+        WindUI:Notify({
+            Title = "Jerarquía generada",
+            Content = "Modelo: " .. modelo.Name,
+            Icon = "check-circle",
+            Duration = 4,
+        })
+    end
+})
+
 Window:SelectTab(1)
