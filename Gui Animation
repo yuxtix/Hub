@@ -1,0 +1,255 @@
+
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Debris = game:GetService("Debris")
+
+-- Obtener jugador local (compatible con exploits)
+local Player = Players.LocalPlayer or game:GetService("Players").LocalPlayer
+local PlayerGui = Player:FindFirstChildOfClass("PlayerGui")
+
+if not PlayerGui then
+    warn("❌ No se encontró PlayerGui. Esperando a que cargue...")
+    repeat task.wait() PlayerGui = Player:FindFirstChildOfClass("PlayerGui") until PlayerGui
+end
+
+-- 🎵 Función de sonido universal
+local function PlaySound(id, volume)
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = volume or 0.5
+	s.PlayOnRemove = true
+	s.Parent = workspace
+	s:Destroy()
+end
+
+-- 🌊 Onda visual (ripple)
+local function CreateRippleEffect(button)
+	local ripple = Instance.new("Frame")
+	ripple.Size = UDim2.new(0, 0, 0, 0)
+	ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+	ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
+	ripple.BackgroundTransparency = 0.7
+	ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ripple.BorderSizePixel = 0
+	ripple.ZIndex = 10
+	ripple.Parent = button
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = ripple
+
+	local tween = TweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(2, 0, 2, 0),
+		BackgroundTransparency = 1
+	})
+	tween:Play()
+	Debris:AddItem(ripple, 1)
+end
+
+-- ✨ Chispas energéticas
+local function CreateSparks(button)
+	for i = 1, math.random(4, 6) do
+		local spark = Instance.new("Frame")
+		spark.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+		spark.BackgroundColor3 = Color3.fromRGB(255, 255, math.random(150, 255))
+		spark.BorderSizePixel = 0
+		spark.AnchorPoint = Vector2.new(0.5, 0.5)
+		spark.Position = UDim2.new(math.random(), 0, math.random(), 0)
+		spark.BackgroundTransparency = 0.2
+		spark.ZIndex = 15
+		spark.Parent = button
+
+		local tween = TweenService:Create(spark, TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+			Position = UDim2.new(math.random(), 0, math.random(), 0),
+			BackgroundTransparency = 1
+		})
+		tween:Play()
+		Debris:AddItem(spark, 0.5)
+	end
+end
+
+-- 💫 Onda pulsante
+local function PulseEnergy(button)
+	local pulse = Instance.new("Frame")
+	pulse.AnchorPoint = Vector2.new(0.5, 0.5)
+	pulse.Position = UDim2.new(0.5, 0, 0.5, 0)
+	pulse.Size = button.Size
+	pulse.BackgroundTransparency = 0.9
+	pulse.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	pulse.BorderSizePixel = 0
+	pulse.ZIndex = 9
+	pulse.Parent = button
+
+	local tween = TweenService:Create(pulse, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+		Size = UDim2.new(1.3, 0, 1.3, 0),
+		BackgroundTransparency = 1
+	})
+	tween:Play()
+	Debris:AddItem(pulse, 0.7)
+end
+
+-- 🌀 Vibración suave
+local function ShakeButton(btn, rot)
+	task.spawn(function()
+		for i = 1, 6 do
+			local t = TweenService:Create(btn, TweenInfo.new(0.03), {Rotation = rot + math.random(-4, 4)})
+			t:Play()
+			task.wait(0.03)
+		end
+		btn.Rotation = rot
+	end)
+end
+
+-- 📏 Escalado UDim2
+local function ScaleUDim2(size, factor)
+	return UDim2.new(size.X.Scale * factor, size.X.Offset * factor, size.Y.Scale * factor, size.Y.Offset * factor)
+end
+
+-- ⚙️ Listas de animaciones
+local HoverAnimations = {
+	function(btn, size, rot)
+		return {Size = ScaleUDim2(size, 1.08), Rotation = rot + 2}
+	end,
+	function(btn, size, rot)
+		return {Size = ScaleUDim2(size, 1.15), Rotation = rot - 4}
+	end,
+	function(btn, size, rot)
+		ShakeButton(btn, rot)
+		return {Size = ScaleUDim2(size, 1.05)}
+	end,
+	function(btn, size, rot)
+		task.spawn(function()
+			for i = 1, 3 do
+				local t = TweenService:Create(btn, TweenInfo.new(0.08), {Rotation = rot + math.random(-2, 2)})
+				t:Play()
+				task.wait(0.08)
+			end
+			btn.Rotation = rot
+		end)
+		return {Size = ScaleUDim2(size, 1.1)}
+	end
+}
+
+local ClickAnimations = {
+	function(btn, size, rot)
+		return {Size = ScaleUDim2(size, 0.92), Rotation = rot - 3}
+	end,
+	function(btn, size, rot)
+		ShakeButton(btn, rot)
+		return {Size = ScaleUDim2(size, 0.9)}
+	end,
+	function(btn, size, rot)
+		PulseEnergy(btn)
+		return {Size = ScaleUDim2(size, 0.95), Rotation = rot + 2}
+	end
+}
+
+-- 🔘 Lógica de animación para botones
+local function AnimateButton(btn)
+	if not (btn:IsA("TextButton") or btn:IsA("ImageButton")) then return end
+	local originalSize = btn.Size
+	local originalRotation = btn.Rotation
+	local originalColor = btn.BackgroundColor3
+	local originalTransparency = btn.BackgroundTransparency
+
+	btn.MouseEnter:Connect(function()
+		local anim = HoverAnimations[math.random(1, #HoverAnimations)]
+		local props = anim(btn, originalSize, originalRotation)
+		local tween = TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), props)
+		tween:Play()
+		CreateSparks(btn)
+		PlaySound("rbxassetid://9118822891", 0.35)
+	end)
+
+	btn.MouseLeave:Connect(function()
+		local tween = TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = originalSize,
+			Rotation = originalRotation,
+			BackgroundTransparency = originalTransparency,
+			BackgroundColor3 = originalColor
+		})
+		tween:Play()
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+		task.spawn(function()
+			CreateRippleEffect(btn)
+			PulseEnergy(btn)
+			PlaySound("rbxassetid://9118821033", 0.4)
+			local anim = ClickAnimations[math.random(1, #ClickAnimations)]
+			local props = anim(btn, originalSize, originalRotation)
+			local tween = TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+			tween:Play()
+			tween.Completed:Wait()
+			local rebound = TweenService:Create(btn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+				Size = originalSize,
+				Rotation = originalRotation
+			})
+			rebound:Play()
+		end)
+	end)
+end
+
+-- 🧱 Frames
+local function AnimateFrame(frame)
+	if not frame:IsA("Frame") then return end
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		if frame.Visible then
+			local originalSize = frame.Size
+			local originalTransparency = frame.BackgroundTransparency
+			frame.BackgroundTransparency = 1
+			frame.Size = ScaleUDim2(originalSize, 0.85)
+			frame.Rotation = math.random(-10, 10)
+			local tween = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				BackgroundTransparency = originalTransparency,
+				Size = originalSize,
+				Rotation = 0
+			})
+			tween:Play()
+			PlaySound("rbxassetid://9118824333", 0.25)
+		end
+	end)
+end
+
+-- 🧾 Textos
+local function AnimateLabel(lbl)
+	if not lbl:IsA("TextLabel") then return end
+	lbl.TextTransparency = 1
+	task.spawn(function()
+		wait(math.random() * 0.4)
+		local tween = TweenService:Create(lbl, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+			TextTransparency = 0
+		})
+		tween:Play()
+	end)
+end
+
+-- 🧩 Aplicar animaciones a toda la GUI
+local function ApplyTo(gui)
+	for _, obj in pairs(gui:GetDescendants()) do
+		AnimateButton(obj)
+		AnimateFrame(obj)
+		AnimateLabel(obj)
+	end
+	gui.DescendantAdded:Connect(function(obj)
+		AnimateButton(obj)
+		AnimateFrame(obj)
+		AnimateLabel(obj)
+	end)
+end
+
+-- 🚀 Iniciar
+for _, gui in pairs(PlayerGui:GetChildren()) do
+	if gui:IsA("ScreenGui") then
+		ApplyTo(gui)
+	end
+end
+
+PlayerGui.ChildAdded:Connect(function(child)
+	if child:IsA("ScreenGui") then
+		ApplyTo(child)
+	end
+end)
+
+print("✅ YUXTIX UI ANIMATION SYSTEM 5.0 — Cargado correctamente.")
