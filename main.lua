@@ -222,6 +222,14 @@ local Button = Tab:Button({
 loadstring(game:HttpGet("https://pastebin.com/raw/6n6A85CR"))()    end
 })
 
+local Button = Tab:Button({
+    Title = "Copy Server join",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub-Scripts/refs/heads/main/CopyServerJoin.lua"))()    end
+})
+
 
 local Button = Tab:Button({
     Title = "Catalog Editor",
@@ -425,7 +433,26 @@ local Button = Tab:Button({
 loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/main/SH.lua"))()    end
 })
 
+local Tab = Window:Tab({
+    Title = "Backdoors",
+    Icon = "app-window"	
+})
 
+local Button = Tab:Button({
+    Title = "Lalol Hub",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Its-LALOL/LALOL-Hub/main/Backdoor-Scanner/script"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "Backdoor.exe",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Backdoor-exe-9413"))()    end
+})
 local Tab = Window:Tab({
     Title = "Jerarquía Visual",
     Icon = "list-tree",
