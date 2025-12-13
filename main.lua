@@ -37,8 +37,8 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:EditOpenButton({
-    Title = "Npc Controller",
-    Icon = "monitor",
+    Title = "Yuxtix Hub Lite",
+    Icon = "rbxassetid://137966710397131",
     CornerRadius = UDim.new(0,16),
     StrokeThickness = 2,
     Color = ColorSequence.new( -- gradient
@@ -215,6 +215,14 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/rndmq/Serverlist/refs
 })
 
 local Button = Tab:Button({
+    Title = "Script Blox Search",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/chillz-workshop/main/ScriptSearcher"))()    end
+})
+
+local Button = Tab:Button({
     Title = "Friends Detector",
     Locked = false,
     Callback = function()
@@ -292,10 +300,16 @@ local Section = Tab:Section({
     TextSize = 17,
 })
 
-local Posicion = 0
+local Posicion = "0, 0, 0"
 local x = 0
 local y = 0
 local z = 0
+
+-- Helper to safely find the root part
+local function getSafeRoot(char)
+    if not char then return nil end
+    return char.PrimaryPart or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart")
+end
 
 local Button = Tab:Button({
     Title = "Guardar Posicion",
@@ -303,10 +317,14 @@ local Button = Tab:Button({
 	Icon = "clipboard-copy",
     Callback = function()
 		local char = game.Players.LocalPlayer.Character
-		local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
-		pos = pos and pos.Position
-		if not pos then
-		end
+		local root = getSafeRoot(char)
+        
+		if not root then
+            -- Optional: Add a notification failure here
+            return 
+        end
+        
+        local pos = root.Position
 		local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
 		x = math.round(pos.X)
 		y = math.round(pos.Y)
@@ -320,12 +338,8 @@ local Button = Tab:Button({
             Icon = "rbxassetid://10876599977",
             Duration = 5,
         })
-		
-
     end
 })
-
-
 
 local Keybind = Tab:Keybind({
     Title = "Teletransportar",
@@ -333,21 +347,28 @@ local Keybind = Tab:Keybind({
 	Icon = "move-3d",
     Value = "",
     Callback = function(v)
-
 		local char = game.Players.LocalPlayer.Character
+        local root = getSafeRoot(char)
 	
-		getRoot(char).CFrame = CFrame.new(x,y,z)
-		print(Posicion)
-		WindUI:Notify({
-            Title = "Teletransportado",
-            Content = Posicion,
-            Icon = "rbxassetid://10876599977",
-            Duration = 5,
-        })
-
+        if root then
+		    root.CFrame = CFrame.new(x, y, z)
+		    print(Posicion)
+		    WindUI:Notify({
+                Title = "Teletransportado",
+                Content = Posicion,
+                Icon = "rbxassetid://10876599977",
+                Duration = 5,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Personaje no encontrado",
+                Icon = "rbxassetid://10876599977",
+                Duration = 3,
+            })
+        end
     end
 })
-
 
 
 
@@ -444,7 +465,7 @@ loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest
 
 local Tab = Window:Tab({
     Title = "Backdoors",
-    Icon = "app-window"	
+    Icon = "server-crash"	
 })
 
 local Button = Tab:Button({
@@ -627,7 +648,7 @@ local Button = Tab:Button({
 
 local Tab = Window:Tab({
     Title = "Steal Scripts",
-    Icon = "folder-output",
+    Icon = "scroll-text",
     Locked = false,
 })
 
