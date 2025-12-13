@@ -426,11 +426,20 @@ local Tab = Window:Tab({
 
 local Button = Tab:Button({
     Title = "Solara HUB",
-    Desc = "Toda peticion http lo obtendras",
+    Desc = "----",
     Locked = false,
     Callback = function()
 -- Hope you will enjoy using it ;)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/main/SH.lua"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "Ph4asmo",
+    Desc = "----",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()    end
 })
 
 local Tab = Window:Tab({
