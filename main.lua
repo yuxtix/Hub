@@ -36,6 +36,20 @@ local Window = WindUI:CreateWindow({
 	
 })
 
+Window:EditOpenButton({
+    Title = "Npc Controller",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
+
 
 WindUI:SetNotificationLower(true)
 local Tab = Window:Tab({
@@ -124,8 +138,8 @@ local Paragraph = Tab:Paragraph({
             Title = "Ejecutar",
             Callback = function()	
 			
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/yuxtix/Hub/refs/heads/main/dex%20plus.lua"))()
-				
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/yuxtix/Hub/refs/heads/main/dex%20plus.lua"))()				
 			 end,
         }
     }
@@ -157,8 +171,55 @@ local Button = Tab:Button({
     Desc = "Toda peticion http lo obtendras",
     Locked = false,
     Callback = function()
-        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Http-Spy-41029"))()
-    end
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/InfernusScripts/Ketamine/refs/heads/main/Ketamine.lua"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "find Scrpts",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/main/SH.lua"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "Free camera",
+	Desc = "Shift + P",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://zxfolix.github.io/freecamV2.txt"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "Telekinesis v5",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/randomstring0/Qwerty/refs/heads/main/qwerty11.lua"))()    end
+})
+local Button = Tab:Button({
+    Title = "Universe Viewer",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EnesXVC/UniverseViewer/main/script"))()    end
+})
+local Button = Tab:Button({
+    Title = "Buy Devproducts",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/rndmq/Serverlist/refs/heads/main/Server87"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "Friends Detector",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://pastebin.com/raw/6n6A85CR"))()    end
 })
 
 
@@ -351,6 +412,21 @@ local Paragraph = Tab:Paragraph({
 })
 
 local Tab = Window:Tab({
+    Title = "Hubs",
+    Icon = "app-window"	
+})
+
+local Button = Tab:Button({
+    Title = "Solara HUB",
+    Desc = "Toda peticion http lo obtendras",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/main/SH.lua"))()    end
+})
+
+
+local Tab = Window:Tab({
     Title = "Jerarquía Visual",
     Icon = "list-tree",
     Locked = false,
@@ -512,5 +588,107 @@ local Button = Tab:Button({
     	})
     end,
 })
+
+local Tab = Window:Tab({
+    Title = "Steal Scripts",
+    Icon = "folder-output",
+    Locked = false,
+})
+
+Tab:Button({
+    Title = "Start",
+    icon = "folder-output",
+    Desc = "Escanea",
+    Locked = false,
+	Callback = function()
+
+    -- Crear carpeta principal
+    if not isfolder("LogsXeno") then
+        makefolder("LogsXeno")
+    end
+
+    -- Crear subcarpeta
+    local subfolder = "LogsXeno/ScriptsEjecutados"
+    if not isfolder(subfolder) then
+        makefolder(subfolder)
+    end
+
+    -- función para obtener el siguiente número disponible
+    local function getNextIndex()
+        local files = listfiles(subfolder)
+        local maxIndex = 0
+
+        for _, file in ipairs(files) do
+            local name = file:match(".*/(%d+)%.lua$")
+            if name then
+                local num = tonumber(name)
+                if num and num > maxIndex then
+                    maxIndex = num
+                end
+            end
+        end
+
+        return maxIndex + 1
+    end
+
+    -- evitar doble hook
+    if getgenv().XENO_LOGGER_ACTIVE then
+        warn("XENO LOGGER ya está activo")
+        return
+    end
+    getgenv().XENO_LOGGER_ACTIVE = true
+
+    local old_loadstring = loadstring
+
+    getgenv().loadstring = function(code, ...)
+        print("==== EXECUTED SCRIPT BEGIN ====")
+        print(code)
+        print("==== EXECUTED SCRIPT END ====")
+
+        local index = getNextIndex()
+        local filename = ("%s/%d.lua"):format(subfolder, index)
+
+        writefile(filename,
+            "-- ==== EXECUTED SCRIPT BEGIN ====\n" ..
+            "-- ==== Hooked by Yuxtix Hub ====\n" ..
+
+            code ..
+            "\n-- ==== EXECUTED SCRIPT END ====\n"
+        )
+
+        return old_loadstring(code, ...)
+    end
+
+    print("XENO LOGGER ACTIVADO DESDE EL BOTÓN")
+
+end
+
+})
+
+Tab:Button({
+    Title = "Delete",
+    icon = "home",
+    Desc = "Delete",
+    Locked = false,
+    Callback = function()
+
+        local folder = "LogsXeno/ScriptsEjecutados"
+
+        -- Si la carpeta existe, borrar todo su contenido
+        if isfolder(folder) then
+            local files = listfiles(folder)
+
+            for _, file in ipairs(files) do
+                if isfile(file) then
+                    delfile(file)
+                end
+            end
+        end
+
+        print("Todos los archivos fueron eliminados.")
+    end
+})
+
+
 
 Window:SelectTab(1)
