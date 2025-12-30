@@ -415,6 +415,70 @@ game:GetService("ReplicatedStorage")["TpToBase"]:FireServer()
 })
 
 local Tab = Window:Tab({
+    Title = "Valley Prison",
+    Icon = "tally-5"
+})
+
+local Keybind = Tab:Keybind({
+    Title = "Tp AK47",
+    Desc = "Tecla para teletransportarse",
+	Icon = "move-3d",
+    Value = "",
+    Callback = function(v)
+		local char = game.Players.LocalPlayer.Character
+        local root = getSafeRoot(char)
+	
+        if root then
+		    root.CFrame = CFrame.new(190, 23, -214)
+		    print(Posicion)
+		    WindUI:Notify({
+                Title = "Teletransportado",
+                Content = Posicion,
+                Icon = "rbxassetid://10876599977",
+                Duration = 5,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Personaje no encontrado",
+                Icon = "rbxassetid://10876599977",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+local Keybind = Tab:Keybind({
+    Title = "Tp Key Worker",
+    Desc = "Tecla para teletransportarse",
+	Icon = "move-3d",
+    Value = "",
+    Callback = function(v)
+		local char = game.Players.LocalPlayer.Character
+        local root = getSafeRoot(char)
+	
+        if root then
+		    root.CFrame = CFrame.new(176, 23, -142)
+		    print(Posicion)
+		    WindUI:Notify({
+                Title = "Teletransportado",
+                Content = "Esperar un rato",
+                Icon = "rbxassetid://10876599977",
+                Duration = 5,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Personaje no encontrado",
+                Icon = "rbxassetid://10876599977",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+
+local Tab = Window:Tab({
     Title = "Piano Universal",
     Icon = "music",
     Locked = true,
@@ -466,6 +530,14 @@ loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest
 local Tab = Window:Tab({
     Title = "Backdoors",
     Icon = "server-crash"	
+})
+
+local Button = Tab:Button({
+    Title = "Quicky Cmd",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://gist.github.com/someunknowndude/38cecea5be9d75cb743eac8b1eaf6758/raw"))()    end
 })
 
 local Button = Tab:Button({
