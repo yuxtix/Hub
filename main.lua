@@ -215,6 +215,22 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/rndmq/Serverlist/refs
 })
 
 local Button = Tab:Button({
+    Title = "Chat spy (low)",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/yuxtix/Hub/refs/heads/main/Chat.lua"))()    end
+})
+
+local Button = Tab:Button({
+    Title = "NPC HACK CONTROLLER (YUXTIX)",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/yuxtix/Npc-hack-controller/refs/heads/main/Main.lua"))()    end
+})
+
+local Button = Tab:Button({
     Title = "Script Blox Search",
     Locked = false,
     Callback = function()
@@ -818,6 +834,75 @@ Tab:Button({
     end
 })
 
+---
+-- SECCIÓN: TOOL STEALER
+---
 
+local ToolTab = Window:Tab({
+    Title = "Tool Stealer",
+    Icon = "wrench",
+    Locked = false,
+})
+
+local ToolSection = ToolTab:Section({	
+    Title = "Herramientas Encontradas",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+local function DarTool(objeto)
+    local player = game.Players.LocalPlayer
+    if player and player:FindFirstChild("Backpack") then
+        local clone = objeto:Clone()
+        clone.Parent = player.Backpack
+        
+        WindUI:Notify({
+            Title = "Tool Obtenido",
+            Content = "Has recibido: " .. objeto.Name,
+            Icon = "rbxassetid://10876599977",
+            Duration = 3,
+        })
+    end
+end
+
+-- Botón para refrescar la lista y buscar herramientas
+ToolTab:Button({
+    Title = "Escanear Tools",
+    Desc = "Busca herramientas en todo el juego y crea botones",
+    Icon = "refresh-cw",
+    Callback = function()
+        -- Limpiamos un poco la consola para saber que empezó
+        print("Escaneando herramientas...")
+        
+        local encontrados = 0
+        -- Buscamos en todo el juego
+        for _, v in ipairs(game:GetDescendants()) do
+            if v:IsA("Tool") then
+                encontrados = encontrados + 1
+                
+                -- Crear un botón individual para cada Tool encontrado
+                ToolTab:Button({
+                    Title = "Obtener: " .. v.Name,
+                    Desc = "Ubicación original: " .. v.Parent.Name,
+                    Locked = false,
+                    Callback = function()
+                        DarTool(v)
+                    end
+                })
+            end
+        end
+        
+        WindUI:Notify({
+            Title = "Escaneo Finalizado",
+            Content = "Se encontraron " .. encontrados .. " herramientas.",
+            Icon = "check-circle",
+            Duration = 5,
+        })
+    end
+})
+
+---
+-- FIN DE LA SECCIÓN TOOL STEALER
+---
 
 Window:SelectTab(1)
