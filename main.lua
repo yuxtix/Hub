@@ -184,6 +184,15 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/m
 })
 
 local Button = Tab:Button({
+    Title = "find Scrpts",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ttwizz/Open-Aimbot/master/source.lua"))()    end
+})
+
+
+local Button = Tab:Button({
     Title = "Free camera",
 	Desc = "Shift + P",
     Locked = false,
@@ -880,8 +889,11 @@ ToolTab:Button({
             if v:IsA("Tool") then
                 encontrados = encontrados + 1
                 
+				local hola22 = v.TextureId
                 -- Crear un botón individual para cada Tool encontrado
                 ToolTab:Button({
+					Icon = hola22,
+
                     Title = "Obtener: " .. v.Name,
                     Desc = "Ubicación original: " .. v.Parent.Name,
                     Locked = false,
@@ -904,5 +916,126 @@ ToolTab:Button({
 ---
 -- FIN DE LA SECCIÓN TOOL STEALER
 ---
+---
+-- SECCIÓN: SAVE INSTANCE (JUEGO COMPLETO)
+---
 
+local SaveTab = Window:Tab({
+    Title = "Save Game",
+    Icon = "save",
+    Locked = false,
+})
+
+local SaveSection = SaveTab:Section({
+    Title = "Configuraciones de SynSaveInstance",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+-- Opciones por defecto
+local SaveOptions = {
+    mode = "full",
+    noscripts = false,
+    isdecomposed = false,
+    removehuat = false,
+    noscripts_on_save = false,
+    SaveBytecode = false,
+    DecompileIgnore = {},
+    Object = game -- Por defecto guarda todo el juego
+}
+
+-- Selector de Modo
+SaveTab:Dropdown({
+    Title = "Modo de Guardado",
+    Multi = false,
+    AllowNone = false,
+    Value = "full",
+    Values = {"full", "optimized", "scripts", "terrain"},
+    Callback = function(v)
+        SaveOptions.mode = v
+    end
+})
+
+-- Toggles para configuraciones booleanas
+SaveTab:Toggle({
+    Title = "Sin Scripts (NoScripts)",
+    Desc = "Si se activa, no guardará los scripts del juego.",
+    Value = false,
+    Callback = function(v) SaveOptions.noscripts = v end
+})
+
+SaveTab:Toggle({
+    Title = "Descomponer (IsDecomposed)",
+    Desc = "Guarda el juego en múltiples archivos (Carpeta).",
+    Value = false,
+    Callback = function(v) SaveOptions.isdecomposed = v end
+})
+
+SaveTab:Toggle({
+    Title = "Remover HUAT",
+    Desc = "Elimina etiquetas de 'Hecho por' en el archivo.",
+    Value = false,
+    Callback = function(v) SaveOptions.removehuat = v end
+})
+
+SaveTab:Toggle({
+    Title = "Guardar Bytecode",
+    Desc = "Intenta guardar el bytecode de los scripts.",
+    Value = false,
+    Callback = function(v) SaveOptions.SaveBytecode = v end
+})
+
+SaveTab:Toggle({
+    Title = "Ignorar Scripts al Guardar",
+    Desc = "No guarda scripts durante el proceso de guardado local.",
+    Value = false,
+    Callback = function(v) SaveOptions.noscripts_on_save = v end
+})
+
+-- Botón de Ejecución
+SaveTab:Button({
+    Title = "¡GUARDAR JUEGO AHORA!",
+    Desc = "Inicia el proceso de descarga del mapa/scripts.",
+    Icon = "download",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Iniciando Guardado",
+            Content = "Esto puede congelar el juego un momento. Revisa tu carpeta 'workspace'.",
+            Icon = "rbxassetid://10876599977",
+            Duration = 8,
+        })
+
+        task.spawn(function()
+            local Params = {
+                RepoURL = "https://raw.githubusercontent.com/luau/SynSaveInstance/main/",
+                SSI = "saveinstance",
+            }
+            
+            local ok, synsaveinstance = pcall(function()
+                return loadstring(game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true), Params.SSI)()
+            end)
+
+            if ok and synsaveinstance then
+                synsaveinstance(SaveOptions)
+                WindUI:Notify({
+                    Title = "Éxito",
+                    Content = "El juego se ha guardado en la carpeta de tu executor.",
+                    Icon = "check-circle",
+                    Duration = 5,
+                })
+            else
+                WindUI:Notify({
+                    Title = "Error",
+                    Content = "No se pudo cargar la API de SynSaveInstance.",
+                    Icon = "x-circle",
+                    Duration = 5,
+                })
+            end
+        end)
+    end
+})
+
+---
+-- FIN DE LA SECCIÓN SAVE INSTANCE
+---
 Window:SelectTab(1)
