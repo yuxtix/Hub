@@ -184,7 +184,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/m
 })
 
 local Button = Tab:Button({
-    Title = "find Scrpts",
+    Title = "aimbot",
     Locked = false,
     Callback = function()
 -- Hope you will enjoy using it ;)
