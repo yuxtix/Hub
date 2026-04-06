@@ -1,17 +1,26 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 WindUI:AddTheme({
-    Name = "VinUI_Purple",
-    Accent = "#db7070",
-    Outline = "#FFFFFF",
-    Text = "#FFFFFF",
-    Placeholder = "#d99b9b",
-    Background = "#2e1a1a",
-    Button = "#cd5b5b",
-    Icon = "#db7070",
-})
+    Name = "My Theme",
 
-WindUI:SetTheme("VinUI_Purple")
+	    BackgroundTransparency = 1,
+
+	    Outline = Color3.fromHex("#FFFFFF"),
+
+	    Icon = Color3.fromHex("#FFFFFF"),
+    Button = Color3.fromHex("#e8a20c"),
+
+	Outline = Color3.fromHex("#FFFFFF"),
+	Text = Color3.fromHex("#FFFFFF"),
+    Accent = WindUI:Gradient({                                                     
+        ["0"] = { Color = Color3.fromHex("#e8a20c"), Transparency = 0.5 }, -- Cambié el color para que se note el "Accent"            
+        ["100"] = { Color = Color3.fromHex("#e83f0c"), Transparency = 0.5 },        
+    }, {                                                                            
+        Rotation = 45,                                                               
+    }),
+
+
+})
 
 local Window = WindUI:CreateWindow({
     Title = "Yuxtix Hub lite ",
@@ -35,6 +44,9 @@ local Window = WindUI:CreateWindow({
     },
 	
 })
+
+WindUI:SetTheme("My Theme")
+
 
 Window:EditOpenButton({
     Title = "Yuxtix Hub Lite",
@@ -396,6 +408,22 @@ local Keybind = Tab:Keybind({
 })
 
 
+local Section = Tab:Section({	
+    Title = "Console",
+    TextXAlignment = "Left",
+    TextSize = 17,
+})
+
+local Button = Tab:Button({
+    Title = "Console Copy",
+    Desc = "i like this button",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/yuxtix/Console-copy/refs/heads/main/start.lua"))()    end
+})
+
+
 
 
 local Tab = Window:Tab({
@@ -506,7 +534,7 @@ local Keybind = Tab:Keybind({
 local Tab = Window:Tab({
     Title = "Piano Universal",
     Icon = "music",
-    Locked = true,
+    Locked = false,
 	
 })
 
@@ -522,12 +550,13 @@ local Paragraph = Tab:Paragraph({
             Icon = "play",
             Title = "Ejecutar",
             Callback = function()	
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/TALENTLESS/main/TALENTLESS", true))()
+				loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))()
 					
 			 end,
         }
     }
 })
+
 
 local Tab = Window:Tab({
     Title = "Hubs",
