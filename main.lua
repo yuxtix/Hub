@@ -1,4 +1,6 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+local HttpService = game:GetService("HttpService")
+
 
 WindUI:AddTheme({
     Name = "My Theme",
@@ -466,6 +468,122 @@ local Button = Tab:Button({
 game:GetService("ReplicatedStorage")["TpToBase"]:FireServer()
     end
 })
+
+local scriptblox = Window:Tab({
+    Title = "Buscador script blox",
+    Icon = "tally-5"
+})
+
+--
+
+-- Variables de paginación
+local CurrentPage = 1
+local LastQuery = ""
+local ResultObjects = {}
+
+-- Función para limpiar la lista
+local function ClearResults()
+    for _, obj in pairs(ResultObjects) do
+        obj:Destroy()
+    end
+    ResultObjects = {}
+end
+
+-- Función para buscar
+local function FetchScripts(query, page)
+    if query == "" then return end
+    
+    local url = string.format(
+        "https://scriptblox.com/api/script/search?q=%s&page=%d&max=10",
+        HttpService:UrlEncode(query),
+        page
+    )
+
+    local success, response = pcall(function() return game:HttpGet(url) end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+        local scripts = data.result.scripts
+
+        if #scripts == 0 then
+            WindUI:Notify({ Title = "Fin", Content = "No hay más resultados.", Duration = 3 })
+            return
+        end
+
+        for _, s in pairs(scripts) do
+            local thumbUrl = s.game.imageUrl and ("https://scriptblox.com" .. s.game.imageUrl) or ""
+            local scriptImg = s.image and ("https://scriptblox.com" .. s.image) or thumbUrl
+
+            local status = s.isPatched and "❌ PARCHEADO" or "✅ FUNCIONAL"
+            local verified = s.verified and " ⭐ Verificado" or ""
+            local keySystem = s.key and " 🔑 Requiere Key" or " 🔓 Sin Key"
+
+            local ScriptCard = scriptblox:Paragraph({
+                Title = s.title .. verified,
+                Desc = string.format(
+                    "Juego: %s\nEstado: %s\nViews: %d | %s%s", 
+                    s.game.name, status, s.views, s.scriptType, keySystem
+                ),
+                Image = thumbUrl, 
+                ImageSize = 25,
+                Thumbnail = scriptImg,
+                ThumbnailSize = 70,
+                Buttons = {
+                    {
+                        Icon = "play",
+                        Title = "Ejecutar",
+                        Callback = function()
+                            WindUI:Notify({ Title = "Ejecutando...", Content = s.title })
+                            local code = game:HttpGet("https://scriptblox.com/api/script/raw/" .. s._id)
+                            loadstring(code)()
+                        end,
+                    },
+                    {
+                        Icon = "copy",
+                        Title = "Copiar Link",
+                        Callback = function()
+                            setclipboard("https://scriptblox.com/script/" .. s.slug)
+                            WindUI:Notify({ Title = "Copiado", Content = "Link copiado al portapapeles" })
+                        end,
+                    }
+                }
+            })
+            table.insert(ResultObjects, ScriptCard)
+        end
+    end
+end
+
+scriptblox:Input({
+    Title = "Buscar",
+    Placeholder = "Escribe el nombre del juego...",
+    Callback = function(val) LastQuery = val end
+})
+
+scriptblox:Button({
+    Title = "Buscar Ahora",
+	Icon = "search-code",
+    Callback = function()
+        CurrentPage = 1
+        ClearResults()
+        FetchScripts(LastQuery, CurrentPage)
+    end
+})
+
+scriptblox:Button({
+    Title = "Cargar Más",
+	Icon = "circle-plus",
+    Desc = "Obtener siguiente página",
+    Callback = function()
+        CurrentPage = CurrentPage + 1
+        FetchScripts(LastQuery, CurrentPage)
+    end
+})
+
+WindUI:Notify({ Title = "Bienvenido", Content = "API conectada a ScriptBlox" })
+
+
+--
+
 
 local Tab = Window:Tab({
     Title = "Valley Prison",
