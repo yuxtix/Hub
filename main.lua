@@ -690,6 +690,16 @@ local Button = Tab:Button({
 loadstring(game:HttpGet("https://raw.githubusercontent.com/samuraa1/Solara-Hub/main/SH.lua"))()    end
 })
 
+
+local Button = Tab:Button({
+    Title = "mois7",
+    Desc = "----",
+    Locked = false,
+    Callback = function()
+-- Hope you will enjoy using it ;)
+loadstring(game:HttpGet("https://mois7.xyz/loader"))()    end
+})
+
 local Button = Tab:Button({
     Title = "Ph4asmo",
     Desc = "----",
