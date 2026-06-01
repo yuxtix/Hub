@@ -1,0 +1,636 @@
+-- =====================================================================
+-- BÚSQUEDA Y EXPLORACIÓN AVANZADA DE INSTANCIAS (WIND UI)
+-- =====================================================================
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+local HttpService = game:GetService("HttpService")
+
+-- Configuración del Tema
+WindUI:AddTheme({
+    Name = "ExplorerTheme",
+    BackgroundTransparency = 1,
+    Outline = Color3.fromHex("#FFFFFF"),
+    Icon = Color3.fromHex("#FFFFFF"),
+    Button = Color3.fromHex("#1E90FF"), -- Azul explorador
+    Text = Color3.fromHex("#FFFFFF"),
+    Accent = WindUI:Gradient({                                                     
+        ["0"] = { Color = Color3.fromHex("#5E0DA8"), Transparency = 0.5 },            
+        ["100"] = { Color = Color3.fromHex("#F70FC8"), Transparency = 0.5 },        
+    }, {                                                                            
+        Rotation = 45,                                                               
+    }),
+})
+
+local Window = WindUI:CreateWindow({
+    Title = "Advanced Explorer Hub",
+    Icon = "search",
+    Author = "DevSystem",
+    Folder = "AdvancedExplorer",
+    Size = UDim2.fromOffset(650, 500),
+    Transparent = true,
+    Theme = "ExplorerTheme",
+    SideBarWidth = 200,
+    Background = "",
+    BackgroundImageTransparency = 0.5,
+    HideSearchBar = false,
+    ScrollBarEnabled = true,
+})
+
+WindUI:SetTheme("ExplorerTheme")
+WindUI:SetNotificationLower(true)
+
+-- =====================================================================
+-- VARIABLES GLOBALES Y ESTADO
+-- =====================================================================
+
+local State = {
+    -- Búsqueda
+    Query = "",
+    SearchMode = "Contiene",
+    ClassName = "",
+    RootPath = "workspace",
+    
+    -- Filtros
+    MaxDepth = 0, -- 0 = infinito
+    RequireChildren = false,
+    MinChildren = 0,
+    MaxChildren = 9999,
+    CheckProperties = false,
+    PropName = "",
+    PropValue = "",
+    
+    -- Exclusiones
+    ExcludeClasses = "",
+    
+    -- Motor de búsqueda
+    IsSearching = false,
+    Results = {},
+    ResultObjects = {},
+    CurrentPage = 1,
+    
+    -- Rendimiento
+    BatchSize = 500,
+    YieldTime = 0.05,
+    MaxResultsUI = 30
+}
+
+-- =====================================================================
+-- FUNCIONES DE UTILIDAD
+-- =====================================================================
+
+-- Obtener objeto base seguro a partir de texto (MEJORADO)
+local function GetRootFromPath(pathStr)
+    if not pathStr or pathStr == "" then return workspace end
+    if pathStr:lower() == "game" then return game end
+    if pathStr:lower() == "workspace" then return workspace end
+    
+    -- Si es una palabra simple sin puntos, intentamos buscar el Servicio directamente
+    if not string.find(pathStr, "%.") then
+        local success, result = pcall(function() return game:GetService(pathStr) end)
+        if success and typeof(result) == "Instance" then return result end
+    end
+    
+    -- Analizar la ruta secuencialmente (ej. "workspace.Map.Model")
+    local parts = string.split(pathStr, ".")
+    local current = game
+    
+    local firstPart = parts[1]:lower()
+    if firstPart == "game" then
+        table.remove(parts, 1)
+    elseif firstPart == "workspace" then
+        current = workspace
+        table.remove(parts, 1)
+    else
+        -- Intentar resolver el primer elemento como un servicio
+        local success, result = pcall(function() return game:GetService(parts[1]) end)
+        if success and typeof(result) == "Instance" then
+            current = result
+            table.remove(parts, 1)
+        end
+    end
+
+    -- Navegar jerárquicamente por los hijos
+    for _, partName in ipairs(parts) do
+        if current == nil then break end
+        -- Se usa pcall por si algún objeto bloquea el indexado
+        local success, child = pcall(function() return current:FindFirstChild(partName) end)
+        if success and child then
+            current = child
+        else
+            current = nil
+            break
+        end
+    end
+
+    if current then return current end
+    
+    -- Intento final por loadstring (Para casos excepcionales, si el executor lo soporta)
+    local fallbackSuccess, fallbackResult = pcall(function()
+        return loadstring("return " .. pathStr)()
+    end)
+    if fallbackSuccess and typeof(fallbackResult) == "Instance" then
+        return fallbackResult
+    end
+    
+    return nil
+end
+
+-- Limpiar elementos de la interfaz de resultados
+local function ClearResultsUI()
+    for _, obj in pairs(State.ResultObjects) do
+        pcall(function() obj:Destroy() end)
+    end
+    State.ResultObjects = {}
+end
+
+-- Obtener la ruta completa de un objeto
+local function GetFullPath(obj)
+    local path = obj.Name
+    local parent = obj.Parent
+    while parent and parent ~= game do
+        path = parent.Name .. "." .. path
+        parent = parent.Parent
+    end
+    return "game." .. path
+end
+
+-- Verificador de filtros
+local function MatchesFilters(inst, depth)
+    -- Límite de profundidad
+    if State.MaxDepth > 0 and depth > State.MaxDepth then return false end
+    
+    -- Nombre
+    if State.Query ~= "" then
+        local nameLower = inst.Name:lower()
+        local queryLower = State.Query:lower()
+        local nameExact = inst.Name
+        local queryExact = State.Query
+
+        if State.SearchMode == "Exacto (Ignorar Mayús)" and nameLower ~= queryLower then return false end
+        if State.SearchMode == "Exacto (Sensible Mayús)" and nameExact ~= queryExact then return false end
+        if State.SearchMode == "Contiene" and not string.find(nameLower, queryLower, 1, true) then return false end
+        if State.SearchMode == "No Contiene" and string.find(nameLower, queryLower, 1, true) then return false end
+        if State.SearchMode == "Empieza" and not string.match(nameLower, "^" .. queryLower) then return false end
+        if State.SearchMode == "Termina" and not string.match(nameLower, queryLower .. "$") then return false end
+        
+        -- Wildcard (*): Convierte "Part*Base" en "^part.*base$"
+        if State.SearchMode == "Wildcard (*)" then
+            -- Escapar caracteres mágicos excepto el asterisco
+            local safeQuery = string.gsub(queryLower, "[%(%)%.%%%+%-%?%[%]%^%$]", "%%%1")
+            local pattern = "^" .. string.gsub(safeQuery, "%*", ".*") .. "$"
+            if not string.match(nameLower, pattern) then return false end
+        end
+
+        if State.SearchMode == "Lua Pattern" then
+            local s, m = pcall(function() return string.match(nameExact, State.Query) end)
+            if not s or not m then return false end
+        end
+    end
+    
+    -- Clase
+    if State.ClassName ~= "" and inst.ClassName ~= State.ClassName then return false end
+    
+    -- Exclusiones de Clase
+    if State.ExcludeClasses ~= "" then
+        local excluded = string.split(State.ExcludeClasses, ",")
+        for _, ex in ipairs(excluded) do
+            if inst.ClassName == ex:match("^%s*(.-)%s*$") then return false end
+        end
+    end
+    
+    -- Cantidad de hijos
+    local childrenCount = #inst:GetChildren()
+    if State.RequireChildren and childrenCount == 0 then return false end
+    if childrenCount < State.MinChildren then return false end
+    if childrenCount > State.MaxChildren then return false end
+    
+    -- Propiedades dinámicas
+    if State.CheckProperties and State.PropName ~= "" then
+        local success, val = pcall(function() return inst[State.PropName] end)
+        if not success then return false end
+        if State.PropValue ~= "" and tostring(val) ~= State.PropValue then return false end
+    end
+    
+    return true
+end
+
+-- =====================================================================
+-- PESTAÑAS
+-- =====================================================================
+
+local TabSearch = Window:Tab({ Title = "Búsqueda", Icon = "search", Locked = false })
+local TabFilters = Window:Tab({ Title = "Filtros", Icon = "filter", Locked = false })
+local TabResults = Window:Tab({ Title = "Resultados", Icon = "list", Locked = false })
+local TabTools = Window:Tab({ Title = "Herramientas", Icon = "wrench", Locked = false })
+local TabSettings = Window:Tab({ Title = "Ajustes", Icon = "settings", Locked = false })
+
+-- =====================================================================
+-- CONTENIDO: BÚSQUEDA
+-- =====================================================================
+
+TabSearch:Section({ Title = "Parámetros de Búsqueda", TextXAlignment = "Left", TextSize = 17 })
+
+TabSearch:Input({
+    Title = "Nombre del objeto",
+    Placeholder = "Dejar en blanco para todo...",
+    InputIcon = "type",
+    Callback = function(val) State.Query = val end
+})
+
+TabSearch:Dropdown({
+    Title = "Modo de búsqueda",
+    Multi = false,
+    AllowNone = false,
+    Value = "Contiene",
+    Values = {
+        "Contiene", 
+        "No Contiene", 
+        "Exacto (Ignorar Mayús)", 
+        "Exacto (Sensible Mayús)", 
+        "Empieza", 
+        "Termina", 
+        "Wildcard (*)", 
+        "Lua Pattern"
+    },
+    Callback = function(val) State.SearchMode = val end
+})
+
+TabSearch:Input({
+    Title = "Filtro de Clase (ClassName)",
+    Placeholder = "Ej: Part, Model, LocalScript...",
+    InputIcon = "box",
+    Callback = function(val) State.ClassName = val end
+})
+
+TabSearch:Section({ Title = "Lugar de Búsqueda (Root Path)", TextXAlignment = "Left", TextSize = 17 })
+
+TabSearch:Dropdown({
+    Title = "Servicios / Rutas Rápidas",
+    Desc = "Selecciona un punto de inicio principal.",
+    Multi = false,
+    AllowNone = false,
+    Value = "workspace",
+    Values = {
+        "workspace", 
+        "game", 
+        "Lighting", 
+        "ReplicatedStorage", 
+        "Players", 
+        "ServerStorage", 
+        "ServerScriptService", 
+        "StarterGui", 
+        "StarterPack", 
+        "CoreGui"
+    },
+    Callback = function(val)
+        if val then State.RootPath = val end
+    end
+})
+
+TabSearch:Input({
+    Title = "Ruta Raíz Personalizada (Sobrescribe)",
+    Desc = "Escribe la ruta exacta. Ej: workspace.Map.Trees",
+    Value = "",
+    Placeholder = "Escribe aquí para usar una ruta específica...",
+    InputIcon = "folder",
+    Callback = function(val) 
+        if val and val ~= "" then
+            State.RootPath = val 
+        end
+    end
+})
+
+TabSearch:Section({ Title = "Acciones", TextXAlignment = "Left", TextSize = 17 })
+
+-- Renderizador de resultados en UI (Paginado / Limite para no crashear)
+local function RenderResults()
+    ClearResultsUI()
+    local total = #State.Results
+    local startIdx = ((State.CurrentPage - 1) * State.MaxResultsUI) + 1
+    local endIdx = math.min(startIdx + State.MaxResultsUI - 1, total)
+    
+    if total == 0 then
+        local p = TabResults:Paragraph({
+            Title = "Sin resultados",
+            Desc = "Ajusta tus filtros y vuelve a buscar.",
+        })
+        table.insert(State.ResultObjects, p)
+        return
+    end
+
+    local info = TabResults:Paragraph({
+        Color = "Green",
+        Title = "Resultados (" .. startIdx .. " - " .. endIdx .. " de " .. total .. ")",
+        Desc = "Página " .. State.CurrentPage,
+    })
+    table.insert(State.ResultObjects, info)
+
+    for i = startIdx, endIdx do
+        local obj = State.Results[i]
+        local successPath, fullPath = pcall(function() return GetFullPath(obj) end)
+        if not successPath then fullPath = "Ruta inaccesible" end
+
+        local successChild, childCount = pcall(function() return #obj:GetChildren() end)
+        if not successChild then childCount = 0 end
+
+        local p = TabResults:Paragraph({
+            Title = obj.Name .. " [" .. obj.ClassName .. "]",
+            Desc = "Ruta: " .. fullPath .. "\nHijos: " .. tostring(childCount),
+            Buttons = {
+                {
+                    Icon = "copy",
+                    Title = "Copiar Ruta",
+                    Callback = function()
+                        setclipboard(fullPath)
+                        WindUI:Notify({ Title = "Copiado", Content = "Ruta copiada al portapapeles" })
+                    end,
+                },
+                {
+                    Icon = "code",
+                    Title = "Imprimir",
+                    Callback = function()
+                        print("==== OBJETO ENCONTRADO ====")
+                        print("Nombre:", obj.Name)
+                        print("Clase:", obj.ClassName)
+                        print("Ruta:", fullPath)
+                        print("Referencia:", obj)
+                        WindUI:Notify({ Title = "Impreso", Content = "Información enviada a la consola (F9)" })
+                    end,
+                }
+            }
+        })
+        table.insert(State.ResultObjects, p)
+    end
+end
+
+-- Motor de búsqueda (BFS Iterativo)
+local function StartSearch()
+    local rootObj = GetRootFromPath(State.RootPath)
+    if not rootObj then
+        WindUI:Notify({ Title = "Error", Content = "Ruta raíz inválida o inaccesible", Icon = "x-circle", Duration = 3 })
+        return
+    end
+
+    State.IsSearching = true
+    State.Results = {}
+    State.CurrentPage = 1
+    ClearResultsUI()
+
+    WindUI:Notify({ Title = "Buscando...", Content = "Analizando desde: " .. State.RootPath, Duration = 3 })
+
+    task.spawn(function()
+        local queue = {{obj = rootObj, depth = 0}}
+        local batchCounter = 0
+        local startTime = tick()
+
+        while #queue > 0 and State.IsSearching do
+            local currentItem = table.remove(queue, 1)
+            local currentObj = currentItem.obj
+            local currentDepth = currentItem.depth
+
+            -- No evaluar el root si el usuario busca algo específico (opcional), pero por ahora lo evaluamos
+            if currentObj ~= game and MatchesFilters(currentObj, currentDepth) then
+                table.insert(State.Results, currentObj)
+            end
+
+            -- Obtener hijos seguro
+            local success, children = pcall(function() return currentObj:GetChildren() end)
+            if success then
+                for _, child in ipairs(children) do
+                    table.insert(queue, {obj = child, depth = currentDepth + 1})
+                end
+            end
+
+            -- Control de rendimiento
+            batchCounter = batchCounter + 1
+            if batchCounter >= State.BatchSize then
+                batchCounter = 0
+                task.wait(State.YieldTime)
+            end
+        end
+
+        State.IsSearching = false
+        local timeTaken = math.floor((tick() - startTime) * 100) / 100
+
+        WindUI:Notify({ 
+            Title = "Búsqueda Finalizada", 
+            Content = "Se encontraron " .. #State.Results .. " objetos en " .. timeTaken .. "s.", 
+            Icon = "check-circle", 
+            Duration = 5 
+        })
+        
+        RenderResults()
+        Window:SelectTab(3) -- Salto automático a Resultados
+    end)
+end
+
+TabSearch:Button({
+    Title = "Iniciar Búsqueda",
+    Icon = "play",
+    Callback = function()
+        if State.IsSearching then
+            WindUI:Notify({ Title = "Aviso", Content = "Ya hay una búsqueda en progreso.", Duration = 3 })
+            return
+        end
+        StartSearch()
+    end
+})
+
+TabSearch:Button({
+    Title = "Detener Búsqueda",
+    Icon = "square",
+    Callback = function()
+        State.IsSearching = false
+        WindUI:Notify({ Title = "Detenido", Content = "Búsqueda forzada a parar.", Duration = 3 })
+    end
+})
+
+-- =====================================================================
+-- CONTENIDO: FILTROS
+-- =====================================================================
+
+TabFilters:Section({ Title = "Filtros de Jerarquía", TextXAlignment = "Left", TextSize = 17 })
+
+TabFilters:Input({
+    Title = "Límite de Profundidad",
+    Placeholder = "0 = Sin límite",
+    Value = "0",
+    InputIcon = "layers",
+    Callback = function(val) State.MaxDepth = tonumber(val) or 0 end
+})
+
+TabFilters:Toggle({
+    Title = "Debe tener hijos",
+    Desc = "Solo mostrar objetos que no estén vacíos internamente.",
+    Value = false,
+    Callback = function(val) State.RequireChildren = val end
+})
+
+TabFilters:Input({
+    Title = "Mínimo de hijos",
+    Value = "0",
+    Callback = function(val) State.MinChildren = tonumber(val) or 0 end
+})
+
+TabFilters:Input({
+    Title = "Máximo de hijos",
+    Value = "9999",
+    Callback = function(val) State.MaxChildren = tonumber(val) or 9999 end
+})
+
+TabFilters:Section({ Title = "Filtros de Exclusión", TextXAlignment = "Left", TextSize = 17 })
+
+TabFilters:Input({
+    Title = "Clases a excluir",
+    Placeholder = "Ej: Part, BasePart, Script (Separado por comas)",
+    InputIcon = "ban",
+    Callback = function(val) State.ExcludeClasses = val end
+})
+
+TabFilters:Section({ Title = "Filtros de Propiedad (Avanzado)", TextXAlignment = "Left", TextSize = 17 })
+
+TabFilters:Toggle({
+    Title = "Habilitar filtro por Propiedad",
+    Value = false,
+    Callback = function(val) State.CheckProperties = val end
+})
+
+TabFilters:Input({
+    Title = "Nombre de la Propiedad",
+    Placeholder = "Ej: Archivable, Visible, Transparency...",
+    Callback = function(val) State.PropName = val end
+})
+
+TabFilters:Input({
+    Title = "Valor esperado",
+    Placeholder = "Ej: true, 1, false...",
+    Callback = function(val) State.PropValue = val end
+})
+
+-- =====================================================================
+-- CONTENIDO: RESULTADOS
+-- =====================================================================
+
+TabResults:Section({ Title = "Navegación", TextXAlignment = "Left", TextSize = 17 })
+
+TabResults:Button({
+    Title = "Página Anterior",
+    Icon = "chevron-left",
+    Callback = function()
+        if State.CurrentPage > 1 then
+            State.CurrentPage = State.CurrentPage - 1
+            RenderResults()
+        end
+    end
+})
+
+TabResults:Button({
+    Title = "Página Siguiente",
+    Icon = "chevron-right",
+    Callback = function()
+        local maxPages = math.ceil(#State.Results / State.MaxResultsUI)
+        if State.CurrentPage < maxPages then
+            State.CurrentPage = State.CurrentPage + 1
+            RenderResults()
+        end
+    end
+})
+
+TabResults:Button({
+    Title = "Limpiar Resultados",
+    Icon = "trash",
+    Callback = function()
+        State.Results = {}
+        State.CurrentPage = 1
+        ClearResultsUI()
+        WindUI:Notify({ Title = "Limpio", Content = "Lista de resultados vaciada." })
+    end
+})
+
+TabResults:Section({ Title = "Lista de Resultados", TextXAlignment = "Left", TextSize = 17 })
+-- La lista se inyecta dinámicamente mediante RenderResults()
+
+-- =====================================================================
+-- CONTENIDO: HERRAMIENTAS
+-- =====================================================================
+
+TabTools:Section({ Title = "Utilidades Globales", TextXAlignment = "Left", TextSize = 17 })
+
+TabTools:Button({
+    Title = "Copiar Todos los Nombres",
+    Icon = "copy",
+    Callback = function()
+        local txt = ""
+        for _, v in ipairs(State.Results) do txt = txt .. v.Name .. "\n" end
+        setclipboard(txt)
+        WindUI:Notify({ Title = "Copiado", Content = "Nombres copiados al portapapeles." })
+    end
+})
+
+TabTools:Button({
+    Title = "Copiar Todas las Rutas",
+    Icon = "copy",
+    Callback = function()
+        local txt = ""
+        for _, v in ipairs(State.Results) do 
+            local s, p = pcall(function() return GetFullPath(v) end)
+            if s then txt = txt .. p .. "\n" end
+        end
+        setclipboard(txt)
+        WindUI:Notify({ Title = "Copiado", Content = "Rutas copiadas al portapapeles." })
+    end
+})
+
+local ScriptViewer = TabTools:Code({
+    Title = "Exportador (Log)",
+    Code = "-- Aquí aparecerán exportaciones en texto...",
+})
+
+TabTools:Button({
+    Title = "Exportar a Log",
+    Icon = "file-text",
+    Callback = function()
+        local txt = "-- Resultados de Búsqueda:\n"
+        for i, v in ipairs(State.Results) do
+            local s, p = pcall(function() return GetFullPath(v) end)
+            txt = txt .. string.format("-- [%d] %s (Clase: %s)\n%s\n\n", i, v.Name, v.ClassName, s and p or "Error de ruta")
+        end
+        ScriptViewer:SetCode(txt)
+        WindUI:Notify({ Title = "Exportado", Content = "Revisa la ventana de Log arriba." })
+    end
+})
+
+-- =====================================================================
+-- CONTENIDO: AJUSTES (RENDIMIENTO)
+-- =====================================================================
+
+TabSettings:Section({ Title = "Rendimiento del Escaneo", TextXAlignment = "Left", TextSize = 17 })
+
+TabSettings:Paragraph({
+    Title = "Nota importante",
+    Desc = "Modificar estos valores afectará cuánto lag genera la búsqueda. Valores altos de Lote escanean más rápido pero congelan el juego.",
+})
+
+TabSettings:Input({
+    Title = "Tamaño de Lote (Batch Size)",
+    Desc = "Instancias a procesar antes de pausar. Defecto: 500",
+    Value = "500",
+    Callback = function(val) State.BatchSize = tonumber(val) or 500 end
+})
+
+TabSettings:Input({
+    Title = "Tiempo de Yield (Segundos)",
+    Desc = "Pausa entre lotes. Defecto: 0.05",
+    Value = "0.05",
+    Callback = function(val) State.YieldTime = tonumber(val) or 0.05 end
+})
+
+TabSettings:Input({
+    Title = "Límite de Resultados UI por Página",
+    Desc = "Evita lag en la interfaz de WindUI. Defecto: 30",
+    Value = "30",
+    Callback = function(val) State.MaxResultsUI = tonumber(val) or 30 end
+})
+
+-- Inicializar en primera pestaña
+Window:SelectTab(1)
