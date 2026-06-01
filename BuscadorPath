@@ -9,10 +9,11 @@ local HttpService = game:GetService("HttpService")
 WindUI:AddTheme({
     Name = "ExplorerTheme",
     BackgroundTransparency = 1,
-    Outline = Color3.fromHex("#FFFFFF"),
+    Outline = Color3.fromHex("#F70FC8"),
     Icon = Color3.fromHex("#FFFFFF"),
-    Button = Color3.fromHex("#1E90FF"), -- Azul explorador
+    Button = Color3.fromHex("#F70FC8"), -- Azul explorador
     Text = Color3.fromHex("#FFFFFF"),
+
     Accent = WindUI:Gradient({                                                     
         ["0"] = { Color = Color3.fromHex("#5E0DA8"), Transparency = 0.5 },            
         ["100"] = { Color = Color3.fromHex("#F70FC8"), Transparency = 0.5 },        
@@ -34,6 +35,7 @@ local Window = WindUI:CreateWindow({
     BackgroundImageTransparency = 0.5,
     HideSearchBar = false,
     ScrollBarEnabled = true,
+    
 })
 
 WindUI:SetTheme("ExplorerTheme")
@@ -42,6 +44,8 @@ WindUI:SetNotificationLower(true)
 -- =====================================================================
 -- VARIABLES GLOBALES Y ESTADO
 -- =====================================================================
+
+
 
 local State = {
     -- Búsqueda
@@ -213,6 +217,12 @@ local function MatchesFilters(inst, depth)
     
     return true
 end
+
+Window:Tag({
+    Title = "V. 1.0.0",
+    Icon = "github", -- optional
+    Color = Color3.fromRGB(235, 12, 189), -- custom color
+})
 
 -- =====================================================================
 -- PESTAÑAS
